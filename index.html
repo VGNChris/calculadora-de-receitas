@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Receita de Pão</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .input-number-no-spinner::-webkit-outer-spin-button,
+        .input-number-no-spinner::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .input-number-no-spinner {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-2xl mx-auto">
+        <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+            
+            <header class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Calculadora de Receitas</h1>
+                <p class="text-gray-500 mt-2">Ajuste sua receita de pão com facilidade.</p>
+            </header>
+
+            <!-- Seção de Cálculo -->
+            <div class="bg-blue-50 rounded-lg p-6 mb-8">
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-6">
+                    <label for="bread-quantity" class="text-lg font-medium text-gray-700">Eu quero fazer</label>
+                    <input type="number" id="bread-quantity" value="10" min="1" class="w-24 text-center text-2xl font-bold bg-white border-2 border-blue-300 rounded-lg h-14 focus:border-blue-500 focus:ring-blue-500 transition input-number-no-spinner">
+                    <span class="text-lg font-medium text-gray-700">porções.</span>
+                </div>
+                <p class="text-center text-sm text-gray-500 mt-3">A receita base é para <strong id="base-recipe-yield">10</strong> porções.</p>
+            </div>
+
+            <!-- Seção de Ingredientes -->
+            <div>
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Ingredientes Necessários</h2>
+                <div class="space-y-3" id="ingredients-list">
+                    <!-- A lista de ingredientes calculada será inserida aqui pelo JavaScript -->
+                </div>
+            </div>
+
+            <hr class="my-8 border-gray-200">
+
+            <!-- Seção para Editar a Receita Base -->
+            <div>
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Editar Receita Base</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3">Ingrediente</th>
+                                <th scope="col" class="px-4 py-3">Quantidade</th>
+                                <th scope="col" class="px-4 py-3">Unidade</th>
+                                <th scope="col" class="px-4 py-3 text-right">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="base-ingredients-table">
+                            <!-- A tabela de ingredientes base será inserida aqui -->
+                        </tbody>
+                    </table>
+                </div>
+                <button id="add-ingredient-btn" class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition">
+                    + Adicionar Ingrediente
+                </button>
+            </div>
+
+        </div>
+         <footer class="text-center mt-6 text-sm text-gray-400">
+            <p>Criado com ❤️ para facilitar sua vida na cozinha.</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- DADOS INICIAIS ---
+        // Agora suportamos múltiplas receitas!
+        const BASE_YIELD = 10;
+        const API_URL = '/receitas'; // ajuste se backend estiver em outro endereço
+        let recipes = [];
+        let selectedRecipeId = null;
+        let isLoading = false;
+        
+        // --- FUNÇÕES DE BACKEND ---
+        async function loadRecipes() {
+            isLoading = true;
+            renderLoading();
+            try {
+                const res = await fetch(API_URL);
+                recipes = await res.json();
+                if (recipes.length > 0) {
+                    selectedRecipeId = recipes[0].id;
+                } else {
+                    selectedRecipeId = null;
+                }
+            } catch (e) {
+                alert('Erro ao carregar receitas do servidor!');
+                recipes = [];
+                selectedRecipeId = null;
+            }
+            isLoading = false;
+            renderAll();
+        }
+        async function saveRecipes() {
+            isLoading = true;
+            renderLoading();
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(recipes)
+                });
+            } catch (e) {
+                alert('Erro ao salvar receitas no servidor!');
+            }
+            isLoading = false;
+            renderAll();
+        }
+        // Salva no backend sem re-renderizar a interface
+        async function saveRecipesSilent() {
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(recipes)
+                });
+            } catch (e) {
+                // Silencioso
+            }
+        }
+        function renderLoading() {
+            const recipeManagerDiv = document.getElementById('recipe-manager');
+            if (isLoading && recipeManagerDiv) {
+                recipeManagerDiv.innerHTML = '<div class="text-center text-blue-600 font-semibold py-4">Carregando...</div>';
+            }
+        }
+        
+        // --- REFERÊNCIAS AOS ELEMENTOS DO HTML ---
+        const breadQuantityInput = document.getElementById('bread-quantity');
+        const ingredientsListDiv = document.getElementById('ingredients-list');
+        const baseIngredientsTableBody = document.getElementById('base-ingredients-table');
+        const addIngredientBtn = document.getElementById('add-ingredient-btn');
+        const baseRecipeYieldSpan = document.getElementById('base-recipe-yield');
+
+
+        // --- FUNÇÕES PRINCIPAIS ---
+
+        /**
+         * Calcula a quantidade proporcional dos ingredientes e atualiza a lista na tela.
+         */
+        function calculateAndDisplay() {
+            const recipe = getSelectedRecipe();
+            const targetQuantity = parseFloat(breadQuantityInput.value) || 0;
+            
+            // Limpa a lista de ingredientes antes de adicionar os novos valores
+            ingredientsListDiv.innerHTML = '';
+            
+            if (targetQuantity <= 0) {
+                ingredientsListDiv.innerHTML = '<p class="text-gray-500 text-center">Por favor, insira uma quantidade válida de porções.</p>';
+                return;
+            }
+
+            recipe.ingredients.forEach(ingredient => {
+                const calculatedAmount = (ingredient.amount / recipe.yield) * targetQuantity;
+
+                // Formata o número para ter no máximo 2 casas decimais, se necessário
+                const formattedAmount = Number(calculatedAmount.toFixed(2));
+
+                const ingredientCard = `
+                    <div class="bg-gray-50 rounded-lg p-4 flex items-center justify-between shadow-sm">
+                        <span class="font-medium text-gray-800">${ingredient.name}</span>
+                        <span class="font-bold text-lg text-blue-600">${formattedAmount} g</span>
+                    </div>
+                `;
+                ingredientsListDiv.insertAdjacentHTML('beforeend', ingredientCard);
+            });
+        }
+
+        /**
+         * Renderiza a tabela de ingredientes da receita base para edição.
+         */
+        function renderBaseIngredientsTable() {
+            const recipe = getSelectedRecipe();
+            baseIngredientsTableBody.innerHTML = ''; // Limpa a tabela
+            
+            recipe.ingredients.forEach((ingredient, index) => {
+                const row = `
+                    <tr class="bg-white border-b hover:bg-gray-50" data-id="${ingredient.id}">
+                        <td class="px-4 py-3">
+                            <input type="text" value="${ingredient.name}" class="bg-transparent w-full focus:outline-none" data-field="name">
+                        </td>
+                        <td class="px-4 py-3">
+                            <input type="number" value="${ingredient.amount}" class="bg-transparent w-20 focus:outline-none input-number-no-spinner" data-field="amount">
+                        </td>
+                        <td class="px-4 py-3">
+                            <span>g</span>
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <button class="text-red-500 hover:text-red-700 font-semibold" onclick="removeIngredient(${ingredient.id})">Remover</button>
+                        </td>
+                    </tr>
+                `;
+                baseIngredientsTableBody.insertAdjacentHTML('beforeend', row);
+            });
+        }
+
+        /**
+         * Adiciona uma nova linha de ingrediente em branco na tabela de edição.
+         */
+        function addNewIngredient() {
+            const recipe = getSelectedRecipe();
+            const newId = recipe.ingredients.length > 0 ? Math.max(...recipe.ingredients.map(i => i.id)) + 1 : 1;
+            const newIngredient = { id: newId, name: 'Novo Ingrediente', amount: 0 };
+            recipe.ingredients.push(newIngredient);
+            saveRecipes();
+        }
+
+        /**
+         * Remove um ingrediente da receita base.
+         * @param {number} id - O ID do ingrediente a ser removido.
+         */
+        function removeIngredient(id) {
+            const recipe = getSelectedRecipe();
+            recipe.ingredients = recipe.ingredients.filter(ingredient => ingredient.id !== id);
+            saveRecipes();
+        }
+
+        /**
+         * Atualiza os dados no array `baseIngredients` quando o usuário edita um campo na tabela.
+         */
+        function handleTableEdit(event) {
+            const target = event.target;
+            if (target.tagName === 'INPUT') {
+                const row = target.closest('tr');
+                const id = parseInt(row.dataset.id);
+                const field = target.dataset.field;
+                const value = target.type === 'number' ? parseFloat(target.value) : target.value;
+                const recipe = getSelectedRecipe();
+                const ingredientIndex = recipe.ingredients.findIndex(ing => ing.id === id);
+                if (ingredientIndex > -1) {
+                    recipe.ingredients[ingredientIndex][field] = value;
+                    saveRecipesSilent();
+                    calculateAndDisplay();
+                }
+            }
+        }
+        
+        // --- EVENT LISTENERS (OUVINTES DE EVENTOS) ---
+        
+        // Recalcula quando a quantidade de pães muda
+        breadQuantityInput.addEventListener('input', calculateAndDisplay);
+        
+        // Adiciona um novo ingrediente ao clicar no botão
+        addIngredientBtn.addEventListener('click', addNewIngredient);
+        
+        // Escuta por mudanças na tabela de edição (delegação de evento)
+        baseIngredientsTableBody.addEventListener('input', handleTableEdit);
+        
+        // Remove um ingrediente (função global para o `onclick`)
+        window.removeIngredient = removeIngredient;
+
+
+        // --- INICIALIZAÇÃO ---
+        // Garante que tudo esteja pronto quando a página carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            // Adiciona o gerenciador de receitas na interface
+            const header = document.querySelector('header');
+            const recipeManagerDiv = document.createElement('div');
+            recipeManagerDiv.id = 'recipe-manager';
+            header.parentNode.insertBefore(recipeManagerDiv, header.nextSibling);
+            loadRecipes();
+        });
+
+        // --- INTERFACE DE RECEITAS ---
+        //
+        // Renderiza o seletor e gerenciamento de receitas
+        function renderRecipeManager() {
+            const recipeManagerDiv = document.getElementById('recipe-manager');
+            let html = `<div class="mb-6 flex flex-col md:flex-row md:items-center md:space-x-4">
+                <label class="font-medium text-gray-700 mb-2 md:mb-0">Receita:</label>
+                <select id="recipe-select" class="w-full md:w-auto px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    ${recipes.map(r => `<option value="${r.id}" ${r.id === selectedRecipeId ? 'selected' : ''}>${r.name}</option>`).join('')}
+                </select>
+                <button id="new-recipe-btn" class="mt-2 md:mt-0 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition">+ Nova Receita</button>
+                <button id="rename-recipe-btn" class="mt-2 md:mt-0 bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg transition">Renomear</button>
+                <button id="delete-recipe-btn" class="mt-2 md:mt-0 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition">Excluir</button>
+            </div>`;
+            recipeManagerDiv.innerHTML = html;
+            // Eventos
+            document.getElementById('recipe-select').addEventListener('change', (e) => {
+                selectedRecipeId = parseInt(e.target.value);
+                renderAll();
+            });
+            document.getElementById('new-recipe-btn').addEventListener('click', async () => {
+                const name = prompt('Nome da nova receita:');
+                if (name) {
+                    let yieldStr = prompt('Quantas porções essa receita base rende?', '10');
+                    let yieldValue = parseInt(yieldStr);
+                    if (isNaN(yieldValue) || yieldValue <= 0) yieldValue = 10;
+                    const newId = recipes.length > 0 ? Math.max(...recipes.map(r => r.id)) + 1 : 1;
+                    const newRecipe = {
+                        id: newId,
+                        name,
+                        yield: yieldValue,
+                        ingredients: []
+                    };
+                    recipes.push(newRecipe);
+                    selectedRecipeId = newId;
+                    await saveRecipes();
+                }
+            });
+            document.getElementById('rename-recipe-btn').addEventListener('click', async () => {
+                const recipe = recipes.find(r => r.id === selectedRecipeId);
+                if (recipe) {
+                    const newName = prompt('Novo nome da receita:', recipe.name);
+                    if (newName) {
+                        recipe.name = newName;
+                        await saveRecipes();
+                    }
+                }
+            });
+            document.getElementById('delete-recipe-btn').addEventListener('click', async () => {
+                if (recipes.length === 1) {
+                    alert('Você precisa ter pelo menos uma receita.');
+                    return;
+                }
+                if (confirm('Tem certeza que deseja excluir esta receita?')) {
+                    recipes = recipes.filter(r => r.id !== selectedRecipeId);
+                    selectedRecipeId = recipes[0].id;
+                    await saveRecipes();
+                }
+            });
+        }
+        // --- FUNÇÕES PRINCIPAIS ATUALIZADAS ---
+        function getSelectedRecipe() {
+            return recipes.find(r => r.id === selectedRecipeId);
+        }
+        function renderAll() {
+            renderRecipeManager();
+            const recipe = getSelectedRecipe();
+            if (!recipe) return;
+            baseRecipeYieldSpan.textContent = recipe.yield;
+            renderBaseIngredientsTable();
+            calculateAndDisplay();
+        }
+    </script>
+</body>
+</html>
