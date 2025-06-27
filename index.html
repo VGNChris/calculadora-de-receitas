@@ -11,6 +11,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            transition: background 0.2s, color 0.2s;
         }
         .input-number-no-spinner::-webkit-outer-spin-button,
         .input-number-no-spinner::-webkit-inner-spin-button {
@@ -20,13 +21,91 @@
         .input-number-no-spinner {
             -moz-appearance: textfield;
         }
+        .theme-toggle {
+            transition: background 0.2s, color 0.2s;
+        }
+        .dark body {
+            background: #18181b;
+            color: #f4f4f5;
+        }
+        .dark .bg-white {
+            background: #23232a !important;
+        }
+        .dark .bg-blue-50 {
+            background: #23263a !important;
+        }
+        .dark .text-gray-800 {
+            color: #f4f4f5 !important;
+        }
+        .dark .text-gray-700 {
+            color: #e4e4e7 !important;
+        }
+        .dark .text-gray-500 {
+            color: #a1a1aa !important;
+        }
+        .dark .border-gray-200 {
+            border-color: #33334d !important;
+        }
+        .dark .bg-gray-50 {
+            background: #23263a !important;
+        }
+        .dark .bg-gray-100 {
+            background: #18181b !important;
+        }
+        .dark .bg-gray-900 {
+            background: #09090b !important;
+        }
+        .dark .shadow-lg {
+            box-shadow: 0 4px 24px 0 rgba(0,0,0,0.5) !important;
+        }
+        .dark .bg-green-500 {
+            background: #22c55e !important;
+        }
+        .dark .bg-blue-500 {
+            background: #2563eb !important;
+        }
+        .dark .bg-yellow-400 {
+            background: #facc15 !important;
+        }
+        .dark .bg-red-500 {
+            background: #ef4444 !important;
+        }
+        .dark .bg-green-600 {
+            background: #16a34a !important;
+        }
+        .dark .bg-blue-600 {
+            background: #1d4ed8 !important;
+        }
+        .dark .bg-yellow-500 {
+            background: #eab308 !important;
+        }
+        .dark .bg-red-600 {
+            background: #dc2626 !important;
+        }
+        .dark .text-blue-600 {
+            color: #60a5fa !important;
+        }
+        .dark .text-white {
+            color: #f4f4f5 !important;
+        }
+        .dark .text-black {
+            color: #18181b !important;
+        }
+        .dark .focus\:ring-blue-500:focus {
+            --tw-ring-color: #2563eb !important;
+        }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4 transition-colors duration-200">
 
     <div class="w-full max-w-2xl mx-auto">
         <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
-            
+            <!-- Tema toggle -->
+            <div class="flex justify-end mb-2">
+                <button id="theme-toggle" aria-label="Alternar tema claro/escuro" class="theme-toggle rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 shadow-sm transition">
+                    <span id="theme-icon" class="text-xl">🌙</span>
+                </button>
+            </div>
             <header class="text-center mb-8">
                 <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Calculadora de Receitas</h1>
                 <p class="text-gray-500 mt-2">Ajuste sua receita de pão com facilidade.</p>
@@ -77,11 +156,34 @@
 
         </div>
          <footer class="text-center mt-6 text-sm text-gray-400">
-            <p>Criado com ❤️ para facilitar sua vida na cozinha.</p>
+            <p class="text-gray-500 dark:text-gray-400">Criado com ❤️ para facilitar sua vida na cozinha.</p>
         </footer>
     </div>
 
     <script>
+        // --- TEMA CLARO/ESCURO ---
+        function setTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('theme-icon').textContent = '☀️';
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('theme-icon').textContent = '🌙';
+            }
+        }
+        function toggleTheme() {
+            const current = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            setTheme(current === 'dark' ? 'light' : 'dark');
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tema inicial
+            const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            setTheme(savedTheme);
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+        });
+
         // --- DADOS INICIAIS ---
         // Agora suportamos múltiplas receitas!
         const BASE_YIELD = 10;
@@ -176,9 +278,9 @@
                 const formattedAmount = Number(calculatedAmount.toFixed(2));
 
                 const ingredientCard = `
-                    <div class="bg-gray-50 rounded-lg p-4 flex items-center justify-between shadow-sm">
-                        <span class="font-medium text-gray-800">${ingredient.name}</span>
-                        <span class="font-bold text-lg text-blue-600">${formattedAmount} g</span>
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 flex items-center justify-between shadow-sm">
+                        <span class="font-medium text-gray-900 dark:text-gray-100">${ingredient.name}</span>
+                        <span class="font-bold text-lg text-blue-700 dark:text-blue-400">${formattedAmount} g</span>
                     </div>
                 `;
                 ingredientsListDiv.insertAdjacentHTML('beforeend', ingredientCard);
@@ -194,18 +296,18 @@
             
             recipe.ingredients.forEach((ingredient, index) => {
                 const row = `
-                    <tr class="bg-white border-b hover:bg-gray-50" data-id="${ingredient.id}">
+                    <tr class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700" data-id="${ingredient.id}">
                         <td class="px-4 py-3">
-                            <input type="text" value="${ingredient.name}" class="bg-transparent w-full focus:outline-none" data-field="name">
+                            <input type="text" value="${ingredient.name}" class="bg-transparent w-full focus:outline-none text-gray-900 dark:text-gray-100" data-field="name">
                         </td>
                         <td class="px-4 py-3">
-                            <input type="number" value="${ingredient.amount}" class="bg-transparent w-20 focus:outline-none input-number-no-spinner" data-field="amount">
+                            <input type="number" value="${ingredient.amount}" class="bg-transparent w-20 focus:outline-none input-number-no-spinner text-gray-900 dark:text-gray-100" data-field="amount">
                         </td>
                         <td class="px-4 py-3">
                             <span>g</span>
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <button class="text-red-500 hover:text-red-700 font-semibold" onclick="removeIngredient(${ingredient.id})">Remover</button>
+                            <button class="text-red-600 hover:text-red-700 font-semibold px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-red-400 bg-transparent dark:bg-transparent" onclick="removeIngredient(${ingredient.id})">Remover</button>
                         </td>
                     </tr>
                 `;
@@ -286,13 +388,13 @@
         function renderRecipeManager() {
             const recipeManagerDiv = document.getElementById('recipe-manager');
             let html = `<div class="mb-6 flex flex-col md:flex-row md:items-center md:space-x-4">
-                <label class="font-medium text-gray-700 mb-2 md:mb-0">Receita:</label>
-                <select id="recipe-select" class="w-full md:w-auto px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <label class="font-medium text-gray-900 dark:text-gray-100 mb-2 md:mb-0">Receita:</label>
+                <select id="recipe-select" class="w-full md:w-auto px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
                     ${recipes.map(r => `<option value="${r.id}" ${r.id === selectedRecipeId ? 'selected' : ''}>${r.name}</option>`).join('')}
                 </select>
-                <button id="new-recipe-btn" class="mt-2 md:mt-0 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition">+ Nova Receita</button>
-                <button id="rename-recipe-btn" class="mt-2 md:mt-0 bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg transition">Renomear</button>
-                <button id="delete-recipe-btn" class="mt-2 md:mt-0 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition">Excluir</button>
+                <button id="new-recipe-btn" class="mt-2 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition">+ Nova Receita</button>
+                <button id="rename-recipe-btn" class="mt-2 md:mt-0 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition">Renomear</button>
+                <button id="delete-recipe-btn" class="mt-2 md:mt-0 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition">Excluir</button>
             </div>`;
             recipeManagerDiv.innerHTML = html;
             // Eventos
