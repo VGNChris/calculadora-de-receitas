@@ -98,13 +98,40 @@
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4 transition-colors duration-200">
 
-    <div class="w-full max-w-2xl mx-auto">
-        <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
-            <!-- Tema toggle -->
+    <div id="auth-container" class="w-full max-w-md mx-auto hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 md:p-8">
             <div class="flex justify-end mb-2">
-                <button id="theme-toggle" aria-label="Alternar tema claro/escuro" class="theme-toggle rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 shadow-sm transition">
+                <button id="theme-toggle-auth" aria-label="Alternar tema claro/escuro" class="theme-toggle rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-blue-900 bg-blue-900 dark:bg-gray-800 text-white border border-gray-900 dark:border-gray-700 shadow-sm transition">
+                    <span id="theme-icon-auth" class="text-xl">🌙</span>
+                </button>
+            </div>
+            <h2 class="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-4">Entrar ou Cadastrar</h2>
+            <form id="login-form" class="space-y-4">
+                <input type="email" id="login-email" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Email" required autocomplete="username">
+                <input type="password" id="login-password" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Senha" required autocomplete="current-password">
+                <button type="submit" class="w-full bg-blue-900 hover:bg-blue-950 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition">Entrar</button>
+            </form>
+            <div class="text-center text-gray-500 dark:text-gray-400 my-2">ou</div>
+            <form id="register-form" class="space-y-4">
+                <input type="text" id="register-username" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Nome de usuário" required autocomplete="username">
+                <input type="email" id="register-email" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Email" required autocomplete="email">
+                <input type="password" id="register-password" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Senha" required autocomplete="new-password">
+                <button type="submit" class="w-full bg-green-800 hover:bg-green-900 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition">Cadastrar</button>
+            </form>
+            <div id="auth-error" class="text-center text-red-600 dark:text-red-400 mt-4"></div>
+        </div>
+    </div>
+
+    <div id="main-app" class="w-full max-w-2xl mx-auto hidden">
+        <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+            <div class="flex justify-between items-center mb-2">
+                <button id="theme-toggle" aria-label="Alternar tema claro/escuro" class="theme-toggle rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-blue-900 bg-blue-900 dark:bg-gray-800 text-white border border-gray-900 dark:border-gray-700 shadow-sm transition">
                     <span id="theme-icon" class="text-xl">🌙</span>
                 </button>
+                <div id="user-info" class="flex items-center space-x-2">
+                    <span id="user-name" class="font-semibold !text-gray-900 dark:!text-gray-100"></span>
+                    <button id="logout-btn" class="bg-red-800 hover:bg-red-900 text-white font-semibold px-3 py-1 rounded-lg shadow-sm transition text-sm">Sair</button>
+                </div>
             </div>
             <header class="text-center mb-8">
                 <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Calculadora de Receitas</h1>
@@ -161,17 +188,89 @@
     </div>
 
     <script>
-        // --- TEMA CLARO/ESCURO ---
+        // --- AUTENTICAÇÃO FRONTEND ---
+        let authToken = localStorage.getItem('token') || null;
+        let userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+        function setAuth(token, info) {
+            authToken = token;
+            userInfo = info;
+            localStorage.setItem('token', token);
+            localStorage.setItem('userInfo', JSON.stringify(info));
+        }
+        function clearAuth() {
+            authToken = null;
+            userInfo = null;
+            localStorage.removeItem('token');
+            localStorage.removeItem('userInfo');
+        }
+        function showAuth() {
+            document.getElementById('auth-container').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+        }
+        function showApp() {
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            if (userInfo) {
+                updateUserName(userInfo.username);
+            }
+        }
+        async function tryLogin(email, password) {
+            const res = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setAuth(data.token, { username: data.username, email: data.email });
+                return true;
+            } else {
+                const err = await res.json();
+                throw new Error(err.error || 'Erro ao fazer login');
+            }
+        }
+        async function tryRegister(username, email, password) {
+            const res = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+            if (res.ok) {
+                return true;
+            } else {
+                const err = await res.json();
+                throw new Error(err.error || 'Erro ao cadastrar');
+            }
+        }
+        async function doLogout() {
+            if (authToken) {
+                await fetch('/logout', { method: 'POST', headers: { 'Authorization': authToken } });
+            }
+            clearAuth();
+            showAuth();
+        }
+        // --- TEMA CLARO/ESCURO (ajustar para ambos containers) ---
         function setTheme(theme) {
             if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
                 localStorage.setItem('theme', 'dark');
                 document.getElementById('theme-icon').textContent = '☀️';
+                document.getElementById('theme-icon-auth').textContent = '☀️';
             } else {
                 document.documentElement.classList.remove('dark');
                 localStorage.setItem('theme', 'light');
                 document.getElementById('theme-icon').textContent = '🌙';
+                document.getElementById('theme-icon-auth').textContent = '🌙';
             }
+            // Força cor do label Receita e do nome do usuário
+            const labelReceita = document.getElementById('label-receita');
+            if (labelReceita) {
+                labelReceita.style.color = (theme === 'dark') ? '#f4f4f5' : '#111827';
+            }
+            if (userInfo && userInfo.username) {
+                updateUserName(userInfo.username);
+            }
+            forceUserNameColor();
         }
         function toggleTheme() {
             const current = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -182,6 +281,44 @@
             const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             setTheme(savedTheme);
             document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            document.getElementById('theme-toggle-auth').addEventListener('click', toggleTheme);
+
+            // Login/cadastro
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                try {
+                    await tryLogin(email, password);
+                    showApp();
+                    loadRecipes();
+                } catch (err) {
+                    document.getElementById('auth-error').textContent = err.message;
+                }
+            });
+            document.getElementById('register-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const username = document.getElementById('register-username').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                try {
+                    await tryRegister(username, email, password);
+                    await tryLogin(email, password);
+                    showApp();
+                    loadRecipes();
+                } catch (err) {
+                    document.getElementById('auth-error').textContent = err.message;
+                }
+            });
+            document.getElementById('logout-btn').addEventListener('click', doLogout);
+
+            // Inicialização: mostrar auth ou app
+            if (authToken && userInfo) {
+                showApp();
+                loadRecipes();
+            } else {
+                showAuth();
+            }
         });
 
         // --- DADOS INICIAIS ---
@@ -197,7 +334,12 @@
             isLoading = true;
             renderLoading();
             try {
-                const res = await fetch(API_URL);
+                const res = await fetch(API_URL, { headers: { 'Authorization': authToken } });
+                if (res.status === 401) {
+                    clearAuth();
+                    showAuth();
+                    return;
+                }
                 recipes = await res.json();
                 if (recipes.length > 0) {
                     selectedRecipeId = recipes[0].id;
@@ -218,7 +360,7 @@
             try {
                 await fetch(API_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': authToken },
                     body: JSON.stringify(recipes)
                 });
             } catch (e) {
@@ -227,12 +369,11 @@
             isLoading = false;
             renderAll();
         }
-        // Salva no backend sem re-renderizar a interface
         async function saveRecipesSilent() {
             try {
                 await fetch(API_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': authToken },
                     body: JSON.stringify(recipes)
                 });
             } catch (e) {
@@ -280,7 +421,7 @@
                 const ingredientCard = `
                     <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 flex items-center justify-between shadow-sm">
                         <span class="font-medium text-gray-900 dark:text-gray-100">${ingredient.name}</span>
-                        <span class="font-bold text-lg text-blue-700 dark:text-blue-400">${formattedAmount} g</span>
+                        <span class="font-bold text-lg text-blue-900 dark:text-blue-400">${formattedAmount} g</span>
                     </div>
                 `;
                 ingredientsListDiv.insertAdjacentHTML('beforeend', ingredientCard);
@@ -296,18 +437,18 @@
             
             recipe.ingredients.forEach((ingredient, index) => {
                 const row = `
-                    <tr class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700" data-id="${ingredient.id}">
+                    <tr class="bg-white dark:bg-gray-800 border-b border-gray-900 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700" data-id="${ingredient.id}">
                         <td class="px-4 py-3">
-                            <input type="text" value="${ingredient.name}" class="bg-transparent w-full focus:outline-none text-gray-900 dark:text-gray-100" data-field="name">
+                            <input type="text" value="${ingredient.name}" class="bg-transparent w-full focus:outline-none text-gray-900 dark:text-gray-100 border-b border-gray-900 dark:border-gray-700" data-field="name">
                         </td>
                         <td class="px-4 py-3">
-                            <input type="number" value="${ingredient.amount}" class="bg-transparent w-20 focus:outline-none input-number-no-spinner text-gray-900 dark:text-gray-100" data-field="amount">
+                            <input type="number" value="${ingredient.amount}" class="bg-transparent w-20 focus:outline-none input-number-no-spinner text-gray-900 dark:text-gray-100 border-b border-gray-900 dark:border-gray-700" data-field="amount">
                         </td>
                         <td class="px-4 py-3">
                             <span>g</span>
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <button class="text-red-600 hover:text-red-700 font-semibold px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-red-400 bg-transparent dark:bg-transparent" onclick="removeIngredient(${ingredient.id})">Remover</button>
+                            <button class="bg-red-800 hover:bg-red-900 text-white font-semibold px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-red-400 transition" onclick="removeIngredient(${ingredient.id})">Remover</button>
                         </td>
                     </tr>
                 `;
@@ -388,13 +529,13 @@
         function renderRecipeManager() {
             const recipeManagerDiv = document.getElementById('recipe-manager');
             let html = `<div class="mb-6 flex flex-col md:flex-row md:items-center md:space-x-4">
-                <label class="font-medium text-gray-900 dark:text-gray-100 mb-2 md:mb-0">Receita:</label>
-                <select id="recipe-select" class="w-full md:w-auto px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+                <label id="label-receita" class="font-medium mb-2 md:mb-0">Receita:</label>
+                <select id="recipe-select" class="w-full md:w-auto px-3 py-2 border border-gray-900 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
                     ${recipes.map(r => `<option value="${r.id}" ${r.id === selectedRecipeId ? 'selected' : ''}>${r.name}</option>`).join('')}
                 </select>
-                <button id="new-recipe-btn" class="mt-2 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition">+ Nova Receita</button>
-                <button id="rename-recipe-btn" class="mt-2 md:mt-0 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition">Renomear</button>
-                <button id="delete-recipe-btn" class="mt-2 md:mt-0 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition">Excluir</button>
+                <button id="new-recipe-btn" class="mt-2 md:mt-0 bg-blue-900 hover:bg-blue-950 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition">+ Nova Receita</button>
+                <button id="rename-recipe-btn" class="mt-2 md:mt-0 bg-yellow-800 hover:bg-yellow-900 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition">Renomear</button>
+                <button id="delete-recipe-btn" class="mt-2 md:mt-0 bg-red-800 hover:bg-red-900 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition">Excluir</button>
             </div>`;
             recipeManagerDiv.innerHTML = html;
             // Eventos
@@ -454,6 +595,33 @@
             renderBaseIngredientsTable();
             calculateAndDisplay();
         }
+
+        // Força a cor correta do nome do usuário
+        function forceUserNameColor() {
+            const userName = document.getElementById('user-name');
+            if (userName) {
+                const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                userName.style.color = (theme === 'dark') ? '#f4f4f5' : '#111827';
+            }
+        }
+
+        // Atualiza o nome do usuário e força a cor correta
+        function updateUserName(name) {
+            const userName = document.getElementById('user-name');
+            if (userName) {
+                userName.textContent = name || '';
+                forceUserNameColor();
+            }
+        }
+
+        // Observa mudanças no nome do usuário e reaplica a cor correta
+        const userNameObserver = new MutationObserver(forceUserNameColor);
+        document.addEventListener('DOMContentLoaded', () => {
+            const userName = document.getElementById('user-name');
+            if (userName) {
+                userNameObserver.observe(userName, { childList: true, characterData: true, subtree: true });
+            }
+        });
     </script>
 </body>
 </html>

@@ -1,49 +1,32 @@
-[
-  {
-    "id": 2,
-    "ingredients": [
-      {
-        "amount": 250,
-        "id": 1,
-        "name": "Água morna"
-      },
-      {
-        "amount": 90,
-        "id": 2,
-        "name": "Cebola"
-      },
-      {
-        "amount": 100,
-        "id": 3,
-        "name": "Óleo"
-      },
-      {
-        "amount": 6,
-        "id": 4,
-        "name": "Sal"
-      },
-      {
-        "amount": 45,
-        "id": 5,
-        "name": "Açúcar"
-      },
-      {
-        "amount": 570,
-        "id": 6,
-        "name": "Farinha de trigo"
-      },
-      {
-        "amount": 10,
-        "id": 7,
-        "name": "Fermento biológico"
-      },
-      {
-        "amount": 30,
-        "id": 8,
-        "name": "Molho de tomate"
-      }
-    ],
-    "name": "Pão de cebola",
-    "yield": 10
-  }
-]
+{
+  "admin@admin.com": [
+    {
+      "id": 1,
+      "name": "Pão Tradicional",
+      "yield": 10,
+      "ingredients": [
+        { "id": 1, "name": "Farinha de Trigo", "amount": 1000 },
+        { "id": 2, "name": "Água Morna", "amount": 600 },
+        { "id": 3, "name": "Fermento Biológico Seco", "amount": 10 },
+        { "id": 4, "name": "Açúcar", "amount": 50 },
+        { "id": 5, "name": "Sal", "amount": 20 },
+        { "id": 6, "name": "Óleo", "amount": 50 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Pão de Cebola",
+      "yield": 10,
+      "ingredients": [
+        { "id": 1, "name": "Água", "amount": 250 },
+        { "id": 2, "name": "Cebola", "amount": 90 },
+        { "id": 3, "name": "Óleo", "amount": 100 },
+        { "id": 4, "name": "Sal", "amount": 6 },
+        { "id": 5, "name": "Açúcar", "amount": 45 },
+        { "id": 6, "name": "Farinha de trigo", "amount": 570 },
+        { "id": 7, "name": "Fermento biológico", "amount": 10 },
+        { "id": 8, "name": "Molho de tomate", "amount": 30 }
+      ]
+    }
+  ]
+}

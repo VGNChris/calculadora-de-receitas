@@ -1,0 +1,7 @@
+[
+  {
+    "email": "admin@admin.com",
+    "username": "admin",
+    "password_hash": "scrypt:32768:8:1$YHxyHKhnoX0TW9W7$9f8f211eeb9d6ad42727951372a49224f81bf073a0b61ec614adc709b070deda84f3b5a9deeb35d7c90c5f80e1bfcec940c6451d656daa2b336fe8bc4602aa97"
+  }
+]
