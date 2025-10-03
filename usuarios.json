@@ -3,5 +3,10 @@
     "email": "admin@admin.com",
     "username": "admin",
     "password_hash": "scrypt:32768:8:1$YHxyHKhnoX0TW9W7$9f8f211eeb9d6ad42727951372a49224f81bf073a0b61ec614adc709b070deda84f3b5a9deeb35d7c90c5f80e1bfcec940c6451d656daa2b336fe8bc4602aa97"
+  },
+  {
+    "email": "",
+    "username": "",
+    "password_hash": "scrypt:32768:8:1$gTeKTpa1sAuPca25$fba74a8c14582af82ff1a413f95820c7972e07069458ad65fb0daa6ed5f0c3306716e21ba3efe1607c53db17d5eb6858e435b5c9219eb420fe86d7ac4eb32a3e"
   }
 ]
