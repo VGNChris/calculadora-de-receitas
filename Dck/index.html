@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Receita de Pão</title>
+    <!-- Tailwind CSS com configuração dark -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Remove arrows nas inputs de número */
+        .input-number-no-spinner::-webkit-outer-spin-button,
+        .input-number-no-spinner::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .input-number-no-spinner {
+            -moz-appearance: textfield;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200 min-h-screen pb-20">
+
+    <!-- Auth Container -->
+    <div id="auth-container" class="w-full max-w-md mx-auto pt-20 px-4 hidden">
+        <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 md:p-8 border border-gray-200 dark:border-gray-700">
+            <div class="flex justify-end mb-2">
+                <button id="theme-toggle-auth" aria-label="Alternar tema claro/escuro"
+                    class="p-2 rounded-full flex items-center justify-center focus:outline-none focus:ring-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <span id="theme-icon-auth" class="material-symbols-outlined">light_mode</span>
+                </button>
+            </div>
+            <h2 class="text-2xl font-bold text-center mb-4">Entrar ou Cadastrar</h2>
+            <form id="login-form" class="space-y-4">
+                <input type="email" id="login-email"
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    placeholder="Email" required autocomplete="username">
+                <input type="password" id="login-password"
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    placeholder="Senha" required autocomplete="current-password">
+                <button type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition">Entrar</button>
+            </form>
+            <div class="text-center text-gray-500 dark:text-gray-400 my-4 text-sm font-medium uppercase">ou</div>
+            <form id="register-form" class="space-y-4">
+                <input type="text" id="register-username"
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-green-600"
+                    placeholder="Nome de usuário" required autocomplete="username">
+                <input type="email" id="register-email"
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-green-600"
+                    placeholder="Email" required autocomplete="email">
+                <input type="password" id="register-password"
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-green-600"
+                    placeholder="Senha" required autocomplete="new-password">
+                <button type="submit"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition">Cadastrar</button>
+            </form>
+            <div id="auth-error" class="text-center text-red-600 dark:text-red-400 mt-4 text-sm font-semibold"></div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app" class="w-full max-w-7xl mx-auto px-4 pt-6 hidden">
+        <!-- Header -->
+        <header
+            class="flex flex-col md:flex-row justify-between items-center py-4 mb-6 border-b border-gray-300 dark:border-gray-700 space-y-4 md:space-y-0">
+            <h1
+                class="text-3xl font-bold flex items-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+                <span
+                    class="material-symbols-outlined text-4xl mr-3 text-blue-600 dark:text-blue-400">bakery_dining</span>
+                Calculadora de Receitas
+            </h1>
+            <div class="flex items-center space-x-3 md:space-x-4">
+                <span id="user-name" class="font-semibold text-gray-700 dark:text-gray-200"></span>
+                <button id="theme-toggle" aria-label="Alternar tema"
+                    class="p-2 rounded-full flex items-center justify-center focus:outline-none focus:ring-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <span id="theme-icon" class="material-symbols-outlined">light_mode</span>
+                </button>
+                <button id="logout-btn"
+                    class="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg shadow transition flex items-center">
+                    <span class="material-symbols-outlined text-sm mr-1.5">logout</span>Sair
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex space-x-2 mb-8 overflow-x-auto pb-2 border-b border-gray-200 dark:border-gray-700 px-1">
+            <button id="nav-recipes"
+                class="bg-blue-600 text-white font-medium px-5 py-2.5 rounded-t-lg whitespace-nowrap transition flex items-center"
+                onclick="switchTab('recipes')">
+                <span class="material-symbols-outlined mr-2 text-lg">receipt_long</span> Minhas Receitas
+            </button>
+            <button id="nav-batch"
+                class="bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 font-medium px-5 py-2.5 rounded-t-lg whitespace-nowrap transition flex items-center border-b-2 border-transparent"
+                onclick="switchTab('batch')">
+                <span class="material-symbols-outlined mr-2 text-lg">calculate</span> Calculadora de Produção (Batch)
+            </button>
+        </nav>
+
+        <!-- TAB: Minhas Receitas -->
+        <div id="view-recipes">
+            <!-- Toolbar -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <button
+                    class="bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2.5 rounded-lg shadow transition flex items-center"
+                    onclick="createNewRecipe()">
+                    <span class="material-symbols-outlined mr-2">add_circle</span> Nova Receita
+                </button>
+                <div class="flex space-x-3">
+                    <button
+                        class="bg-purple-600 hover:bg-purple-700 text-white font-medium px-4 py-2.5 rounded-lg shadow transition flex items-center text-sm md:text-base"
+                        onclick="document.getElementById('file-upload').click()">
+                        <span class="material-symbols-outlined mr-2">upload</span> Importar
+                    </button>
+                    <button
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2.5 rounded-lg shadow transition flex items-center text-sm md:text-base"
+                        onclick="openExportModal()">
+                        <span class="material-symbols-outlined mr-2">download</span> Exportar
+                    </button>
+                    <input type="file" id="file-upload" class="hidden" accept=".json" onchange="importRecipes(event)">
+                </div>
+            </div>
+
+            <div id="loadingIndicator" class="text-center font-medium text-blue-600 dark:text-blue-400 py-10 hidden">
+                Carregando receitas...</div>
+            <div id="empty-recipes-msg" class="text-center text-gray-500 py-10 hidden">Nenhuma receita encontrada. Crie
+                a primeira!</div>
+
+            <!-- Grid of Cards (Multi-Recipe View) -->
+            <div id="recipes-grid" class="flex flex-col space-y-4">
+                <!-- Javascript injects cards here -->
+            </div>
+        </div>
+
+        <!-- TAB: Calculadora de Produção Batch -->
+        <div id="view-batch" class="hidden">
+            <div
+                class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 md:p-8">
+                <h2 class="text-2xl font-bold mb-3 text-gray-800 dark:text-gray-100 flex items-center">
+                    <span class="material-symbols-outlined mr-3 text-3xl text-indigo-500">inventory</span> Calculadora
+                    de Produção Geral
+                </h2>
+                <p class="mb-8 text-sm md:text-base text-gray-600 dark:text-gray-400">Informe abaixo quantas porções de
+                    cada receita você pretende fabricar. O sistema irá somar e gerar a sua "lista de compras"
+                    consolidada.</p>
+
+                <h3 class="font-bold text-lg mb-4 text-gray-700 dark:text-gray-300">Suas Receitas:</h3>
+                <!-- Inputs container -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-8" id="batch-inputs-container">
+                    <!-- Javascript injects active recipes inputs here -->
+                </div>
+
+                <div class="flex justify-center mb-8">
+                    <button
+                        class="w-full md:w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition text-lg flex items-center justify-center"
+                        onclick="calculateBatch()">
+                        <span class="material-symbols-outlined mr-2 text-2xl">functions</span> Calcular Total
+                    </button>
+                </div>
+
+                <div id="batch-results-container" class="hidden">
+                    <h3
+                        class="text-xl font-bold mb-4 pb-2 border-b-2 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100">
+                        Lista Consolidada (Produção)</h3>
+                    <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <table class="w-full text-left text-sm md:text-base">
+                            <thead class="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                                <tr>
+                                    <th class="px-5 py-3.5 font-semibold text-gray-600 dark:text-gray-300">Ingrediente
+                                    </th>
+                                    <th class="px-5 py-3.5 font-semibold text-gray-600 dark:text-gray-300 text-right">
+                                        Quantidade Total (g / ml / uni)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="batch-results-body"
+                                class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                                <!-- Javascript injects sorted consolidated list here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL: Editar Receita Base -->
+    <div id="recipe-modal"
+        class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50 backdrop-blur-sm transition-opacity">
+        <div
+            class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col relative border border-gray-200 dark:border-gray-700">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center"><span
+                        class="material-symbols-outlined mr-2">edit_note</span> Editar Receita</h2>
+                <button
+                    class="text-gray-500 hover:text-gray-800 dark:hover:text-white p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition flex items-center justify-center"
+                    onclick="closeRecipeModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto grow">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                    <div>
+                        <label class="block font-medium mb-1.5 text-gray-700 dark:text-gray-300">Nome da Receita</label>
+                        <input type="text" id="modal-recipe-name"
+                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-medium mb-1.5 text-gray-700 dark:text-gray-300">Rendimento Base
+                            (Porções)</label>
+                        <input type="number" id="modal-recipe-yield" min="1"
+                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 input-number-no-spinner">
+                    </div>
+                </div>
+
+                <h3 class="font-bold text-lg mb-3 text-gray-800 dark:text-gray-200">Ingredientes da Base</h3>
+                <div
+                    class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 mb-4 bg-gray-50 dark:bg-gray-900">
+                    <table class="w-full text-sm text-left">
+                        <thead
+                            class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 uppercase text-xs">
+                            <tr>
+                                <th class="px-4 py-3">Ingrediente</th>
+                                <th class="px-4 py-3 w-28">Quant.</th>
+                                <th class="px-3 py-3 w-16 text-center">Remover</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-ingredients-body"
+                            class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                            <!-- dynamic rows -->
+                        </tbody>
+                    </table>
+                </div>
+                <button
+                    class="bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900 font-semibold px-4 py-2.5 rounded-lg mb-2 w-full transition border border-green-200 dark:border-green-800 flex items-center justify-center"
+                    onclick="addModalIngredient()">
+                    <span class="material-symbols-outlined mr-2">add</span> Adicionar Linha Vazia
+                </button>
+            </div>
+
+            <div
+                class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3 bg-gray-50 dark:bg-gray-900 rounded-b-2xl">
+                <button
+                    class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium px-5 py-2.5 rounded-lg shadow-sm transition"
+                    onclick="closeRecipeModal()">Cancelar</button>
+                <button
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-lg shadow-sm transition flex items-center"
+                    onclick="saveModalRecipe()">
+                    <span class="material-symbols-outlined mr-2 text-sm">save</span> Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Exportar -->
+    <div id="export-modal"
+        class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50 backdrop-blur-sm transition-opacity">
+        <div
+            class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md flex flex-col relative border border-gray-200 dark:border-gray-700">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center"><span
+                        class="material-symbols-outlined mr-2">ios_share</span> Exportar Receitas</h2>
+                <p class="text-sm text-gray-500 mt-1">Selecione quais receitas deseja baixar para o seu backup local
+                    (.json).</p>
+            </div>
+            <div class="p-4 overflow-y-auto max-h-60" id="export-list">
+                <!-- dynamic checkboxes -->
+            </div>
+            <div
+                class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900 rounded-b-2xl">
+                <button class="text-gray-600 dark:text-gray-400 hover:text-gray-800 font-medium px-2 py-2"
+                    onclick="closeExportModal()">Cancelar</button>
+                <button
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2.5 rounded-lg shadow-sm transition flex items-center"
+                    onclick="confirmExport()">
+                    <span class="material-symbols-outlined mr-2">download</span> Baixar Selecionadas
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+        // --- TEMA CLARO/ESCURO COM TAILWIND ---
+        function setTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('theme-icon').textContent = 'light_mode';
+                document.getElementById('theme-icon-auth').textContent = 'light_mode';
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('theme-icon').textContent = 'dark_mode';
+                document.getElementById('theme-icon-auth').textContent = 'dark_mode';
+            }
+        }
+        function toggleTheme() {
+            const current = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            setTheme(current === 'dark' ? 'light' : 'dark');
+        }
+        // Inicializa tema imediatamente para evitar flash branco
+        const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        setTheme(savedTheme);
+
+
+        // --- ESTADO GLOBAL ---
+        let authToken = localStorage.getItem('token') || null;
+        let userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+        let recipes = [];
+        let editingRecipeId = null;
+        const API_URL = '/receitas';
+
+
+        // --- AUTENTICAÇÃO ---
+        function setAuth(token, info) {
+            authToken = token;
+            userInfo = info;
+            localStorage.setItem('token', token);
+            localStorage.setItem('userInfo', JSON.stringify(info));
+        }
+        function clearAuth() {
+            authToken = null;
+            userInfo = null;
+            recipes = [];
+            localStorage.removeItem('token');
+            localStorage.removeItem('userInfo');
+        }
+        function showAuth() {
+            document.getElementById('auth-container').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+        }
+        function showApp() {
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            if (userInfo) {
+                document.getElementById('user-name').textContent = userInfo.username;
+            }
+        }
+        async function tryAuth(url, body) {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Erro no servidor');
+            return data;
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            try {
+                const data = await tryAuth('/login', { email, password });
+                setAuth(data.token, { username: data.username, email: data.email });
+                showApp();
+                loadRecipes();
+            } catch (err) {
+                document.getElementById('auth-error').textContent = err.message;
+            }
+        });
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            try {
+                await tryAuth('/register', { username, email, password });
+                const loginData = await tryAuth('/login', { email, password });
+                setAuth(loginData.token, { username: loginData.username, email: loginData.email });
+                showApp();
+                loadRecipes();
+            } catch (err) {
+                document.getElementById('auth-error').textContent = err.message;
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            if (authToken) {
+                await fetch('/logout', { method: 'POST', headers: { 'Authorization': authToken } }).catch(() => null);
+            }
+            clearAuth();
+            showAuth();
+        });
+
+
+        // --- NAVEGAÇÃO ENTRE ABAS ---
+        function switchTab(tabId) {
+            document.getElementById('view-recipes').classList.add('hidden');
+            document.getElementById('view-batch').classList.add('hidden');
+
+            const btnR = document.getElementById('nav-recipes');
+            const btnB = document.getElementById('nav-batch');
+
+            // Reseta cores dos botoes
+            btnR.className = "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 font-medium px-5 py-2.5 rounded-t-lg whitespace-nowrap transition bg-transparent border-b-2 border-transparent flex items-center";
+            btnB.className = "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 font-medium px-5 py-2.5 rounded-t-lg whitespace-nowrap transition bg-transparent border-b-2 border-transparent flex items-center";
+
+            if (tabId === 'recipes') {
+                document.getElementById('view-recipes').classList.remove('hidden');
+                btnR.className = "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold px-5 py-2.5 rounded-t-lg whitespace-nowrap transition border-b-2 border-blue-600 dark:border-blue-400 shadow-sm flex items-center";
+            } else if (tabId === 'batch') {
+                document.getElementById('view-batch').classList.remove('hidden');
+                btnB.className = "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold px-5 py-2.5 rounded-t-lg whitespace-nowrap transition border-b-2 border-blue-600 dark:border-blue-400 shadow-sm flex items-center";
+                renderBatchInputs();
+            }
+        }
+
+
+        // --- RECIPE DATA MANAGER ---
+        async function loadRecipes() {
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            document.getElementById('empty-recipes-msg').classList.add('hidden');
+            document.getElementById('recipes-grid').innerHTML = '';
+            try {
+                const res = await fetch(API_URL, { headers: { 'Authorization': authToken } });
+                if (res.status === 401) {
+                    clearAuth(); showAuth(); return;
+                }
+                recipes = await res.json();
+                recipes.forEach(r => r.isOpen = false); // Start all collapsed
+            } catch (e) {
+                recipes = [];
+            }
+            document.getElementById('loadingIndicator').classList.add('hidden');
+            renderCards();
+        }
+
+        async function saveRecipes() {
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            // Do not save the `isOpen` property, it's UI state only
+            const toSave = recipes.map(({ isOpen, ...rest }) => rest);
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': authToken },
+                    body: JSON.stringify(toSave)
+                });
+            } catch (e) {
+                alert('Erro ao sincronizar com o servidor');
+            }
+            document.getElementById('loadingIndicator').classList.add('hidden');
+            renderCards();
+            if (!document.getElementById('view-batch').classList.contains('hidden')) {
+                renderBatchInputs();
+            }
+        }
+
+
+        // --- RENDERIZAR CARDS (MINHAS RECEITAS COM ACCORDION) ---
+        function toggleRecipeCard(id) {
+            const r = recipes.find(x => x.id === id);
+            if (r) {
+                r.isOpen = !r.isOpen;
+                renderCards();
+            }
+        }
+
+        function renderCards() {
+            const container = document.getElementById('recipes-grid');
+            const emptyMsg = document.getElementById('empty-recipes-msg');
+
+            if (recipes.length === 0) {
+                container.innerHTML = '';
+                emptyMsg.classList.remove('hidden');
+                return;
+            }
+            emptyMsg.classList.add('hidden');
+
+            container.innerHTML = recipes.map(r => `
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex flex-col border border-gray-200 dark:border-gray-700 overflow-hidden hover:border-blue-400 dark:hover:border-blue-600 transition">
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-700/80 cursor-pointer flex justify-between items-center select-none" onclick="toggleRecipeCard(${r.id})">
+                        <div class="flex items-center space-x-3 overflow-hidden">
+                            <span class="material-symbols-outlined text-gray-500 transition-transform duration-300 ${r.isOpen ? 'rotate-180' : ''}">expand_more</span>
+                            <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 truncate pr-2" title="${r.name}">${r.name}</h2>
+                        </div>
+                        <div class="flex space-x-2 shrink-0" onclick="event.stopPropagation()">
+                            <button class="bg-yellow-50 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/60 p-2 border border-yellow-200 dark:border-yellow-800 rounded-md shadow-sm transition flex items-center" title="Editar Receita" onclick="openRecipeModal(${r.id})">
+                                <span class="material-symbols-outlined text-lg">edit</span>
+                            </button>
+                            <button class="bg-red-50 dark:bg-red-900/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/60 p-2 border border-red-200 dark:border-red-800 rounded-md shadow-sm transition flex items-center" title="Excluir" onclick="deleteRecipe(${r.id})">
+                                <span class="material-symbols-outlined text-lg">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="recipe-body-${r.id}" class="p-6 flex-grow flex flex-col pt-4 border-t border-gray-100 dark:border-gray-700 ${r.isOpen ? '' : 'hidden'}">
+                        <div class="bg-blue-50/50 dark:bg-gray-700/50 p-4 rounded-xl mb-5 flex max-w-sm flex-col sm:flex-row sm:items-center sm:justify-between border border-blue-100 dark:border-gray-600">
+                            <span class="font-medium text-gray-700 dark:text-gray-300 mb-2 sm:mb-0">Quero produzir:</span>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" id="target-${r.id}" value="${r.yield}" min="1" class="w-20 text-center font-bold text-lg bg-white dark:bg-gray-800 border-2 border-blue-300 dark:border-gray-500 rounded-lg py-1 focus:ring-2 focus:ring-blue-500 focus:outline-none input-number-no-spinner" oninput="calculateCard(${r.id})">
+                                <span class="text-gray-600 dark:text-gray-400 font-medium">un.</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-semibold text-gray-700 dark:text-gray-200">Ingredientes</h3>
+                            <div class="text-xs text-blue-600 dark:text-blue-400 font-semibold bg-blue-100 dark:bg-gray-700 px-2 py-1 rounded-md">
+                                Base: ${r.yield} un.
+                            </div>
+                        </div>
+                        
+                        <div id="ingredients-${r.id}" class="space-y-2">
+                            <!-- Injetado por JS -->
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Calculate open cards
+            recipes.filter(r => r.isOpen).forEach(r => calculateCard(r.id));
+        }
+
+        function calculateCard(id) {
+            const recipe = recipes.find(r => r.id === id);
+            if (!recipe) return;
+            const input = document.getElementById(`target-${id}`);
+            if (!input) return; // card might be collapsed or deleted
+            const target = parseFloat(input.value) || 0;
+            const container = document.getElementById(`ingredients-${id}`);
+
+            if (target <= 0) {
+                container.innerHTML = '<div class="text-red-500 text-center text-sm py-2">Quantidade inválida</div>';
+                return;
+            }
+            if (recipe.ingredients.length === 0) {
+                container.innerHTML = '<div class="text-gray-400 text-center text-sm py-2 italic flex justify-between">Nenhum ingrediente. <span class="cursor-pointer text-blue-500 underline" onclick="openRecipeModal(' + id + ')">Adicionar</span></div>';
+                return;
+            }
+
+            container.innerHTML = recipe.ingredients.map(ing => {
+                const amt = (ing.amount / recipe.yield) * target;
+                return `
+                    <div class="flex justify-between items-center py-2 px-3 bg-gray-50/50 dark:bg-gray-800 rounded-lg border dark:border-gray-700 border-gray-100">
+                        <span class="text-gray-700 dark:text-gray-300 font-medium flex items-center"><span class="material-symbols-outlined text-[16px] text-gray-400 mr-2">arrow_right</span> ${ing.name}</span>
+                        <span class="font-bold text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 px-3 py-1 rounded shadow-sm border border-gray-200 dark:border-gray-700">${Number(amt.toFixed(2))}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+
+        // --- AÇÕES CRUD DE RECEITA ---
+        function createNewRecipe() {
+            const newId = recipes.length > 0 ? Math.max(...recipes.map(r => r.id)) + 1 : 1;
+            recipes.unshift({ // Coloca no começo da lista pra ficar fácil achar
+                id: newId,
+                name: "Nova Receita",
+                yield: 10,
+                ingredients: [],
+                isOpen: true  // Já abre o card ao criar
+            });
+            saveRecipes().then(() => {
+                openRecipeModal(newId);
+            });
+        }
+        function deleteRecipe(id) {
+            if (confirm("Tem certeza que deseja excluir esta receita definitivamente?")) {
+                recipes = recipes.filter(r => r.id !== id);
+                saveRecipes();
+            }
+        }
+
+
+        // --- MODAL EDITAR BASE ---
+        function openRecipeModal(id) {
+            const recipe = recipes.find(r => r.id === id);
+            editingRecipeId = id;
+
+            document.getElementById('modal-recipe-name').value = recipe.name;
+            document.getElementById('modal-recipe-yield').value = recipe.yield;
+
+            // Trabalhamos com uma cópia até que o usário clique em "Salvar"
+            window.modalIngredients = JSON.parse(JSON.stringify(recipe.ingredients));
+            renderModalIngredients();
+
+            document.getElementById('recipe-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // block page scroll
+        }
+        function closeRecipeModal() {
+            document.getElementById('recipe-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function renderModalIngredients() {
+            const tbody = document.getElementById('modal-ingredients-body');
+            tbody.innerHTML = window.modalIngredients.map((ing, idx) => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition border-b dark:border-gray-700 last:border-0 group">
+                    <td class="px-4 py-2">
+                        <input type="text" class="w-full bg-transparent border-0 border-b border-transparent focus:border-blue-500 focus:ring-0 px-0 py-1 text-gray-900 dark:text-gray-100 transition" value="${ing.name}" placeholder="Nome do ingrediente" onchange="window.modalIngredients[${idx}].name = this.value">
+                    </td>
+                    <td class="px-4 py-2">
+                        <input type="number" step="any" min="0" class="w-full bg-transparent border-0 border-b border-transparent focus:border-blue-500 focus:ring-0 px-0 py-1 text-gray-900 dark:text-gray-100 transition input-number-no-spinner" value="${ing.amount}" onchange="window.modalIngredients[${idx}].amount = parseFloat(this.value)||0">
+                    </td>
+                    <td class="px-4 py-2 text-center">
+                        <button class="text-red-400 hover:text-red-600 p-1 rounded transition opacity-50 group-hover:opacity-100 bg-red-50 dark:bg-transparent dark:hover:bg-red-900/40 flex items-center justify-center mx-auto" onclick="removeModalIngredient(${idx})" title="Remover">
+                            <span class="material-symbols-outlined text-sm">close</span>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            if (window.modalIngredients.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="px-4 py-4 text-center text-gray-500 italic">Preencha os ingredientes para formar a base desta receita.</td></tr>`;
+            }
+        }
+        function addModalIngredient() {
+            const newId = window.modalIngredients.length > 0 ? Math.max(...window.modalIngredients.map(i => i.id)) + 1 : 1;
+            window.modalIngredients.push({ id: newId, name: '', amount: 0 });
+            renderModalIngredients();
+        }
+        function removeModalIngredient(idx) {
+            window.modalIngredients.splice(idx, 1);
+            renderModalIngredients();
+        }
+        function saveModalRecipe() {
+            const name = document.getElementById('modal-recipe-name').value.trim() || 'Receita sem nome';
+            const yieldVal = parseFloat(document.getElementById('modal-recipe-yield').value) || 1;
+
+            const recipeIndex = recipes.findIndex(r => r.id === editingRecipeId);
+            if (recipeIndex > -1) {
+                recipes[recipeIndex].name = name;
+                recipes[recipeIndex].yield = yieldVal;
+                // Excluir linhas onde nome esta vazio ou nulo e valor = 0
+                const cleanList = window.modalIngredients.filter(i => i.name.trim() !== '' || i.amount > 0);
+                recipes[recipeIndex].ingredients = cleanList;
+
+                saveRecipes();
+                closeRecipeModal();
+            }
+        }
+
+
+        // --- BATCH CALCULATOR (PRODUÇÃO GERAL) ---
+        function renderBatchInputs() {
+            const container = document.getElementById('batch-inputs-container');
+            if (recipes.length === 0) {
+                container.innerHTML = `<div class="col-span-1 md:col-span-2 xl:col-span-3 text-center text-gray-500">Você não possui receitas criadas ainda.</div>`;
+                document.getElementById('batch-results-container').classList.add('hidden');
+                return;
+            }
+            container.innerHTML = recipes.map(r => `
+                <div class="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition">
+                    <h3 class="font-bold text-gray-800 dark:text-gray-100 mb-3 truncate leading-tight">${r.name}</h3>
+                    <div class="flex items-center justify-between mt-auto">
+                        <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Deseja Produzir:</span>
+                        <div class="flex items-center space-x-1">
+                            <input type="number" id="batch-target-${r.id}" value="0" min="0" class="w-16 text-center border font-bold rounded-lg py-1.5 bg-white dark:bg-gray-600 border-gray-300 dark:border-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none input-number-no-spinner" onclick="this.select()">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function calculateBatch() {
+            const totals = new Map();
+            let totalBreads = 0;
+
+            recipes.forEach(recipe => {
+                const input = document.getElementById(`batch-target-${recipe.id}`);
+                const target = input ? parseFloat(input.value) || 0 : 0;
+                if (target > 0) {
+                    totalBreads += target;
+                    recipe.ingredients.forEach(ing => {
+                        const name = ing.name.trim();
+                        if (name === "") return;
+                        // Chave de soma insensível a caixa
+                        const key = name.toLowerCase();
+                        const amt = (ing.amount / recipe.yield) * target;
+
+                        if (!totals.has(key)) {
+                            totals.set(key, { name: name, amount: 0 }); // Guarda o formato de casing original a primeira vez que entra
+                        }
+                        totals.get(key).amount += amt;
+                    });
+                }
+            });
+
+            const resultsContainer = document.getElementById('batch-results-container');
+            const tbody = document.getElementById('batch-results-body');
+
+            if (totals.size === 0) {
+                tbody.innerHTML = `<tr><td colspan="2" class="px-5 py-4 text-center text-gray-500">Nenhuma quantidade especificada. Digite os valores nas caixas acima!</td></tr>`;
+            } else {
+                // Ordena por quantidade (descendente)
+                const sorted = Array.from(totals.values()).sort((a, b) => b.amount - a.amount);
+                tbody.innerHTML = sorted.map(item => `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition group">
+                        <td class="px-5 py-3 font-medium text-gray-800 dark:text-gray-200 uppercase">${item.name}</td>
+                        <td class="px-5 py-3 font-bold text-blue-700 dark:text-blue-400 text-right"><span class="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded shadow-sm border border-gray-200 dark:border-gray-600">${Number(item.amount.toFixed(2))}</span></td>
+                    </tr>
+                `).join('');
+            }
+            resultsContainer.classList.remove('hidden');
+        }
+
+
+        // --- IMPORTAR & EXPORTAR ---
+        function openExportModal() {
+            if (recipes.length === 0) return alert("Não há receitas para exportar.");
+            const container = document.getElementById('export-list');
+            container.innerHTML = recipes.map(r => `
+                <label class="flex items-center space-x-3 py-2.5 px-3 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer border-b dark:border-gray-700 last:border-0">
+                    <input type="checkbox" value="${r.id}" class="form-checkbox h-5 w-5 text-indigo-600 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-indigo-500 export-chk" checked>
+                    <span class="text-gray-800 dark:text-gray-200 font-medium">${r.name}</span>
+                </label>
+            `).join('');
+            document.getElementById('export-modal').classList.remove('hidden');
+        }
+        function closeExportModal() {
+            document.getElementById('export-modal').classList.add('hidden');
+        }
+        function confirmExport() {
+            const checkboxes = document.querySelectorAll('.export-chk:checked');
+            const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            const toExport = recipes.filter(r => selectedIds.includes(r.id)).map(({ isOpen, ...rest }) => rest);
+
+            if (toExport.length === 0) return alert("Selecione pelo menos uma receita para exportar.");
+
+            const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(toExport, null, 2));
+            const a = document.createElement('a');
+            a.href = dataStr;
+            a.download = `calc_receitas_backup.json`;
+            a.click();
+            closeExportModal();
+        }
+
+        function importRecipes(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!Array.isArray(imported)) throw new Error("O arquivo não contém uma lista válida.");
+
+                    let count = 0;
+                    let newId = recipes.length > 0 ? Math.max(...recipes.map(r => r.id)) + 1 : 1;
+
+                    imported.forEach(r => {
+                        // Verifica formato basico
+                        if (r.name && r.ingredients) {
+                            r.id = newId++;
+                            r.isOpen = false;
+                            recipes.push(r);
+                            count++;
+                        }
+                    });
+
+                    if (count > 0) {
+                        await saveRecipes();
+                        alert(`Sucesso! Foram importadas ${count} receitas.`);
+                    } else {
+                        alert("O formato do arquivo parece estar incorreto, nenhuma receita válida lida.");
+                    }
+                } catch (err) {
+                    alert("Erro ao ler JSON: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reseta input proxy
+        }
+
+        // --- INICIAR ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            document.getElementById('theme-toggle-auth').addEventListener('click', toggleTheme);
+
+            if (authToken) {
+                showApp();
+                loadRecipes();
+                // Select recipes tab by default
+                switchTab('recipes');
+            } else {
+                showAuth();
+            }
+        });
+    </script>
+</body>
+
+</html>
